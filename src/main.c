@@ -26,6 +26,8 @@
 #include "periph/timer.h"
 #include "periph/watchdog.h"
 
+#define SAMPLE_CNT 204800000 /* @ Fs=2370.3 Hz = 24h */
+
 #ifndef FIRMWARE_VERSION
 #define FIRMWARE_VERSION "dev"
 #endif
@@ -117,13 +119,35 @@ static uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
     return first_sector;
 }
 
+struct sdcard_spi_dev_t sdcard_dev;
+struct mcp3201_spi_dev_t adc_dev;
+unsigned long int sample_counter = 0;
+int sample_fd;
+
 void timer2_callback(void)
 {
     gpio_toggle(LED_D3_PIN);
+    LCD_ClearScreen();
+    LCD_PutInt(sample_counter);
 }
 
-struct sdcard_spi_dev_t adc_dev;
-struct sdcard_spi_dev_t sdcard_dev;
+void timer3_callback(void)
+{
+    int ret;
+    char buffer[128];
+    unsigned int len = 0;
+    unsigned int result = mcp3201_get_sample(&adc_dev);
+    //printf("%ld\n\n", i);
+    sprintf(buffer, "%d\n", result);
+    len = strlen(buffer);
+    ret = fat16_write(sample_fd, buffer, len);
+    if (ret < 0 || (unsigned int)ret != len) {
+        fat16_close(sample_fd);
+        DBG_error("failed to write to file\n");
+    }
+    if(sample_counter++ > SAMPLE_CNT)
+        timer_stop(TIMER_3);
+}
 
 void print_reset_cause()
 {
@@ -154,8 +178,12 @@ void configure_periph()
     
     /* Configure timer 2 to blink LED */
     timer_power_up(TIMER_2);
-    timer_configure(TIMER_2, TIMER3_PRESCALER_256, 13000, 1);
+    timer_configure(TIMER_2, TIMER2_PRESCALER_64, 15000, 1);
     timer_start(TIMER_2);
+    
+    /* Configure timer 3 to aquire sample */
+    timer_power_up(TIMER_3);
+    timer_configure(TIMER_3, TIMER3_PRESCALER_64, 50, 1);
     
     LCD_Initialize();
     DBG("LCD Initialized");
@@ -171,17 +199,13 @@ void configure_periph()
     RPOR10bits.RP21R = 0x000b;        /* SPI1 - SCK */
     
     gpio_init_out(LED_D3_PIN, 0);
-    
-    adc_dev.spi_num = SPI_2;
-    adc_dev.cs_pin = ADC_CS_PIN;
-    
+
     spi_power_up(SPI_2);
     spi_configure(SPI_2, 400000, SPI_MODE_0);
     spi_enable(SPI_2);
 }
 
 int main(void) {
-    int fd, i;
     uint32_t partition_offset;
     
     configure_periph();
@@ -211,27 +235,17 @@ int main(void) {
     }
     
 
-    fd = fat16_open("/SAMPLES.TXT", 'w');
-    if (fd < 0)
+    sample_fd = fat16_open("/SAMPLES.TXT", 'w');
+    if (sample_fd < 0)
         DBG_error("failed to open file for write\n");
-    
-    for (i = 0; i < 100000; ++i) {
-        int ret;
-        char buffer[128];
-        unsigned int len = 0;
-        unsigned int result = mcp3201_get_sample(&adc_dev);
-        //printf("%ld\n\n", i);
-        sprintf(buffer, "%d\n", result);
-        len = strlen(buffer);
-        ret = fat16_write(fd, buffer, len);
-        if (ret < 0 || (unsigned int)ret != len) {
-            fat16_close(fd);
-            DBG_error("failed to write to file\n");
-        }
-        //mcu_delay(50);
-    }
 
-    fat16_close(fd);
+    /* Start data acquisition*/
+    timer_start(TIMER_3);
+    
+    /* Wait until data acquisition is done */
+    while(timer_is_running(TIMER_3));
+    
+    fat16_close(sample_fd);
     sdcard_cache_flush();
     
     printf("DONE");
