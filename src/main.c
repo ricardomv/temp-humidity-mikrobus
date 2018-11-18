@@ -23,6 +23,7 @@
 #include "periph/core_timer.h"
 #include "periph/periph_conf.h"
 #include "periph/timer1.h"
+#include "periph/timer.h"
 #include "periph/watchdog.h"
 
 /* Pins for SPI communication */
@@ -108,7 +109,10 @@ static uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
     return first_sector;
 }
 
-
+void timer2_callback(void)
+{
+    gpio_toggle(LED_D3_PIN);
+}
 
 int main(void) {
     int fd;
@@ -126,6 +130,11 @@ int main(void) {
     timer1_power_up();
     timer1_configure(TIMER1_PRESCALER_1, 4000, 1);
     timer1_start();
+    
+    /* Configure timer 2 to blink LED */
+    timer_power_up(TIMER_2);
+    timer_configure(TIMER_2, TIMER3_PRESCALER_256, 13000, 1);
+    timer_start(TIMER_2);
     
     LCD_Initialize();
     DBG("LCD Initialized");
@@ -154,13 +163,6 @@ int main(void) {
     RPOR10bits.RP21R = 0x000b;        /* SPI1 - SCK */
     
     gpio_init_out(LED_D3_PIN, 0);
-    gpio_init_out(LED_D4_PIN, 0);
-    gpio_init_out(LED_D5_PIN, 0);
-    gpio_init_out(LED_D6_PIN, 0);
-    gpio_init_out(LED_D7_PIN, 0);
-    gpio_init_out(LED_D8_PIN, 0);
-    gpio_init_out(LED_D9_PIN, 0);
-    gpio_init_out(LED_D10_PIN, 0);
     
     adc_dev.spi_num = SPI_2;
     adc_dev.cs_pin = ADC_CS_PIN;
@@ -201,32 +203,6 @@ int main(void) {
         if (ret < 0 || (unsigned int)ret != len) {
             fat16_close(fd);
             DBG_error("failed to write to file\n");
-        }
-        switch(i%8) {
-            case 0:
-                gpio_toggle(LED_D3_PIN);
-                break;
-            case 1:
-                gpio_toggle(LED_D4_PIN);
-                break;
-            case 2:
-                gpio_toggle(LED_D5_PIN);
-                break;
-            case 3:
-                gpio_toggle(LED_D6_PIN);
-                break;
-            case 4:
-                gpio_toggle(LED_D7_PIN);
-                break;
-            case 5:
-                gpio_toggle(LED_D8_PIN);
-                break;
-            case 6:
-                gpio_toggle(LED_D9_PIN);
-                break;
-            case 7:
-                gpio_toggle(LED_D10_PIN);
-                break;
         }
         //mcu_delay(50);
     }
