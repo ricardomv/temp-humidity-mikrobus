@@ -26,6 +26,14 @@
 #include "periph/timer.h"
 #include "periph/watchdog.h"
 
+#ifndef FIRMWARE_VERSION
+#define FIRMWARE_VERSION "dev"
+#endif
+
+static const char *welcome_msg = "Proj SEP firmware " FIRMWARE_VERSION
+                                 " - " __DATE__ " " __TIME__
+                                 "\n";
+
 /* Pins for SPI communication */
 #define SCK_PIN         GPIO_PIN(PORT_G, 6)
 #define MISO_PIN        GPIO_PIN(PORT_G, 7)
@@ -114,15 +122,28 @@ void timer2_callback(void)
     gpio_toggle(LED_D3_PIN);
 }
 
-int main(void) {
-    int fd;
-    unsigned long int i;
-    char buffer[128];
-    unsigned int len = 0;
-    uint32_t partition_offset;
-    struct sdcard_spi_dev_t sdcard_dev;
-    struct mcp3201_spi_dev_t adc_dev;
-    
+struct sdcard_spi_dev_t adc_dev;
+struct sdcard_spi_dev_t sdcard_dev;
+
+void print_reset_cause()
+{
+    switch (mcu_get_reset_cause()) {
+        case BOR_RESET:
+            DBG_stop("Brownout caused reset");
+            break;
+        case SOFT_RESET:
+            DBG_stop("SOFT_RESET");
+            break;
+        case WATCHDOG_RESET:
+            DBG_stop("Watchdog caused reset");
+            break;
+        default:
+            break;
+    }
+}
+
+void configure_periph()
+{
     mcu_set_system_clock(8000000LU);
     watchdog_disable();
     
@@ -138,20 +159,7 @@ int main(void) {
     
     LCD_Initialize();
     DBG("LCD Initialized");
-         
-    switch (mcu_get_reset_cause()) {
-        case BOR_RESET:
-            DBG_stop("Brownout caused reset");
-            break;
-        case SOFT_RESET:
-            DBG_stop("SOFT_RESET");
-            break;
-        case WATCHDOG_RESET:
-            DBG_stop("Watchdog caused reset");
-            break;
-        default:
-            break;
-    }
+    
     /* SPI2 */
     gpio_init_out(MOSI_PIN, 0);
     gpio_init_in(MISO_PIN);
@@ -170,6 +178,20 @@ int main(void) {
     spi_power_up(SPI_2);
     spi_configure(SPI_2, 400000, SPI_MODE_0);
     spi_enable(SPI_2);
+}
+
+int main(void) {
+    int fd, i;
+    uint32_t partition_offset;
+    
+    configure_periph();
+
+    printf(welcome_msg);
+    
+    print_reset_cause();
+
+    adc_dev.spi_num = SPI_2;
+    adc_dev.cs_pin = ADC_CS_PIN;
 
     sdcard_dev.spi_num = SPI_2;
     sdcard_dev.cs_pin = SD_CS_PIN;
@@ -195,6 +217,8 @@ int main(void) {
     
     for (i = 0; i < 100000; ++i) {
         int ret;
+        char buffer[128];
+        unsigned int len = 0;
         unsigned int result = mcp3201_get_sample(&adc_dev);
         //printf("%ld\n\n", i);
         sprintf(buffer, "%d\n", result);
