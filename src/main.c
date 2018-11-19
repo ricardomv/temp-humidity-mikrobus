@@ -5,8 +5,59 @@
  * Created on November 15, 2018, 11:05 PM
  */
 
-#pragma config WDTPS = PS1024 /* Set watchdog prescaler */
-#pragma config FWDTEN = SWON  /* Allow watchdog to be disabled by software */
+// FSEC
+#pragma config BWRP = OFF    // Boot Segment Write-Protect bit->Boot Segment may be written
+#pragma config BSS = DISABLED    // Boot Segment Code-Protect Level bits->No Protection (other than BWRP)
+#pragma config BSEN = OFF    // Boot Segment Control bit->No Boot Segment
+#pragma config GWRP = OFF    // General Segment Write-Protect bit->General Segment may be written
+#pragma config GSS = DISABLED    // General Segment Code-Protect Level bits->No Protection (other than GWRP)
+#pragma config CWRP = OFF    // Configuration Segment Write-Protect bit->Configuration Segment may be written
+#pragma config CSS = DISABLED    // Configuration Segment Code-Protect Level bits->No Protection (other than CWRP)
+#pragma config AIVTDIS = OFF    // Alternate Interrupt Vector Table bit->Disabled AIVT
+
+// FBSLIM
+#pragma config BSLIM = 8191    // Boot Segment Flash Page Address Limit bits->
+
+// FOSCSEL
+#pragma config FNOSC = FRC    // Oscillator Source Selection->Internal Fast RC (FRC)
+#pragma config PLLMODE = DISABLED    // PLL Mode Selection->No PLL used; PLLEN bit is not available
+#pragma config IESO = ON    // Two-speed Oscillator Start-up Enable bit->Start up device with FRC, then switch to user-selected oscillator source
+
+// FOSC
+#pragma config POSCMD = NONE    // Primary Oscillator Mode Select bits->Primary Oscillator disabled
+#pragma config OSCIOFCN = OFF    // OSC2 Pin Function bit->OSC2 is clock output
+#pragma config SOSCSEL = OFF    // SOSC Power Selection Configuration bits->Digital (SCLKI) mode
+#pragma config PLLSS = PLL_PRI    // PLL Secondary Selection Configuration bit->PLL is fed by the Primary oscillator
+#pragma config IOL1WAY = ON    // Peripheral pin select configuration bit->Allow only one reconfiguration
+#pragma config FCKSM = CSDCMD    // Clock Switching Mode bits->Both Clock switching and Fail-safe Clock Monitor are disabled
+
+// FWDT
+#pragma config WDTPS = PS32768    // Watchdog Timer Postscaler bits->1:32768
+#pragma config FWPSA = PR128    // Watchdog Timer Prescaler bit->1:128
+#pragma config FWDTEN = OFF    // Watchdog Timer Enable bits->WDT and SWDTEN disabled
+#pragma config WINDIS = OFF    // Watchdog Timer Window Enable bit->Watchdog Timer in Non-Window mode
+#pragma config WDTWIN = WIN25    // Watchdog Timer Window Select bits->WDT Window is 25% of WDT period
+#pragma config WDTCMX = WDTCLK    // WDT MUX Source Select bits->WDT clock source is determined by the WDTCLK Configuration bits
+#pragma config WDTCLK = LPRC    // WDT Clock Source Select bits->WDT uses LPRC
+
+// FPOR
+#pragma config BOREN = ON    // Brown Out Enable bit->Brown Out Enable Bit
+#pragma config LPCFG = OFF    // Low power regulator control->No Retention Sleep
+#pragma config DNVPEN = ENABLE    // Downside Voltage Protection Enable bit->Downside protection enabled using ZPBOR when BOR is inactive
+
+// FICD
+#pragma config ICS = PGD1    // ICD Communication Channel Select bits->Communicate on PGEC1 and PGED1
+#pragma config JTAGEN = OFF    // JTAG Enable bit->JTAG is disabled
+#pragma config BTSWP = OFF    // BOOTSWP Disable->BOOTSWP instruction disabled
+
+// FDEVOPT1
+#pragma config ALTCMPI = DISABLE    // Alternate Comparator Input Enable bit->C1INC, C2INC, and C3INC are on their standard pin locations
+#pragma config TMPRPIN = OFF    // Tamper Pin Enable bit->TMPRN pin function is disabled
+#pragma config SOSCHP = ON    // SOSC High Power Enable bit (valid only when SOSCSEL = 1->Enable SOSC high power mode (default)
+#pragma config ALTVREF = ALTREFEN    // Alternate Voltage Reference Location Enable bit->VREF+ and CVREF+ on RA10, VREF- and CVREF- on RA9
+
+// FBOOT
+#pragma config BTMODE = SINGLE    // Boot Mode Configuration bits->Device is in Single Boot (legacy) mode
 
 #include "xc.h"
 #include <stdio.h>
@@ -25,6 +76,7 @@
 #include "periph/timer1.h"
 #include "periph/timer.h"
 #include "periph/watchdog.h"
+#include "periph/uart.h"
 
 #define SAMPLE_CNT 204800000 /* @ Fs=2370.3 Hz = 24h */
 
@@ -69,12 +121,11 @@ static struct storage_dev_t dev = {
 
 static void DBG(const char *reason)
 {
-    //printf("%s\n", reason);
+    printf("%s\n", reason);
 }
 
 static void DBG_stop(const char *reason)
 {
-    LCD_ClearScreen();
     printf("%s\n", reason);
     while (1);
 }
@@ -82,7 +133,7 @@ static void DBG_stop(const char *reason)
 static void DBG_error(const char *reason)
 {
     LCD_ClearScreen();
-    printf("Error: %s.\n", reason);
+    printf("Error: %s\n", reason);
     while (1);
 }
 
@@ -97,24 +148,24 @@ static uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
     unsigned int i;
     uint32_t first_sector = 0;
 
-    DBG("Reading MBR...\n");
+    DBG("Reading MBR...");
     mbr_read_partition_table(dev);
 
-    DBG("Looking for a FAT16 partition...\n");
+    DBG("Looking for a FAT16 partition...");
     for (i = 0; i < PARTITION_ENTRY_COUNT; ++i) {
         struct partition_info_t p = mbr_get_partition_info(i);
         if ((p.status == BOOTABLE_PARTITION || p.status == INACTIVE_PARTITION)
         &&  p.type == FAT16_PARTITION_TYPE) {
-            //uint32_t size_100kB = p.size / 100000; /* size in 100kB unit */
-            //printf("Found FAT16 partition at entry %u\n", i);
-            //printf("\tstart_sector: %lu\n", p.start_sector);
-            //printf("\tsize: %lu bytes (%lu.%lu MB)\n", p.size, size_100kB / 10, size_100kB % 10);
+            uint32_t size_100kB = p.size / 100000; /* size in 100kB unit */
+            printf("Found FAT16 partition at entry %u\n", i);
+            printf("\tstart_sector: %lu\n", p.start_sector);
+            printf("\tsize: %lu bytes (%lu.%lu MB)\n", p.size, size_100kB / 10, size_100kB % 10);
             first_sector = p.start_sector;
             break;
         }
     }
     if (i == PARTITION_ENTRY_COUNT)
-        DBG_error("Failed to found a FAT16 partition\n");
+        DBG_error("Failed to found a FAT16 partition");
 
     return first_sector;
 }
@@ -143,7 +194,7 @@ void timer3_callback(void)
     ret = fat16_write(sample_fd, buffer, len);
     if (ret < 0 || (unsigned int)ret != len) {
         fat16_close(sample_fd);
-        DBG_error("failed to write to file\n");
+        DBG_error("failed to write to file");
     }
     if(sample_counter++ > SAMPLE_CNT)
         timer_stop(TIMER_3);
@@ -176,6 +227,12 @@ void configure_periph()
     timer1_configure(TIMER1_PRESCALER_1, 4000, 1);
     timer1_start();
     
+    /* UART1 */
+    gpio_init_out(UART_TX_PIN, 1);
+    gpio_init_in(UART_RX_PIN);
+    RPOR8bits.RP17R = 3; //RP17  tx
+    //RPINR18bits.U1RXR = 10;  not sure this is correct
+    
     /* Configure timer 2 to blink LED */
     timer_power_up(TIMER_2);
     timer_configure(TIMER_2, TIMER2_PRESCALER_64, 15000, 1);
@@ -200,9 +257,15 @@ void configure_periph()
     
     gpio_init_out(LED_D3_PIN, 0);
 
+    /* Configure spi */
     spi_power_up(SPI_2);
     spi_configure(SPI_2, 400000, SPI_MODE_0);
     spi_enable(SPI_2);
+    
+    /* Configure uart */
+    uart_power_up(UART_1);
+    uart_configure(UART_1, UART_BD_9600);
+    uart_enable(UART_1);
 }
 
 int main(void) {
@@ -210,6 +273,7 @@ int main(void) {
     
     configure_periph();
 
+    printf("\033[2J");
     printf(welcome_msg);
     
     print_reset_cause();
@@ -221,7 +285,7 @@ int main(void) {
     sdcard_dev.cs_pin = SD_CS_PIN;
 
     if (sdcard_init(&sdcard_dev))
-        DBG_error("sdcard_init failed\n");
+        DBG_error("sdcard_init failed");
 
     sdcard_cache_init(sdcard_dev);
 
@@ -237,7 +301,7 @@ int main(void) {
 
     sample_fd = fat16_open("/SAMPLES.TXT", 'w');
     if (sample_fd < 0)
-        DBG_error("failed to open file for write\n");
+        DBG_error("failed to open file for write");
 
     /* Start data acquisition*/
     timer_start(TIMER_3);
@@ -249,6 +313,7 @@ int main(void) {
     sdcard_cache_flush();
     
     printf("DONE");
+    LCD_PutString("DONE", 4);
 
     mcu_sleep();
 

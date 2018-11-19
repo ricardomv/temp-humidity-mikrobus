@@ -17,7 +17,7 @@
  * along with pic24-framework.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "drivers/lcd.h"
+#include "periph/uart.h"
 #include "periph_conf.h"
 
 /* By default, let's enable IO on UART */
@@ -36,7 +36,7 @@ int __attribute__((__section__(".libc.write"))) write(int handle, void *buffer, 
     case 1:
     case 2:
 #if ENABLE_IO
-        LCD_PutString(buffer, len);
+        uart_write(IO_UART, buffer, len);
 #endif
         break;
     default:
