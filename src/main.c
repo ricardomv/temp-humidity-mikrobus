@@ -90,28 +90,29 @@ static const char *welcome_msg = "Proj SEP firmware " FIRMWARE_VERSION
                                  "\n";
 
 /* Pins for SPI communication */
-#define SCK_PIN         GPIO_PIN(PORT_G, 6)
-#define MISO_PIN        GPIO_PIN(PORT_G, 7)
-#define MOSI_PIN        GPIO_PIN(PORT_G, 8)
+#define SCK_PIN               GPIO_PIN(PORT_G, 6)
+#define MISO_PIN              GPIO_PIN(PORT_G, 7)
+#define MOSI_PIN              GPIO_PIN(PORT_G, 8)
 
 /* Pins for SD card */
-#define SD_CS_PIN          GPIO_PIN(PORT_G, 9)
+#define SD_CS_PIN             GPIO_PIN(PORT_G, 9)
 
-/* Pins for ADC */
-#define ADC_CS_PIN          GPIO_PIN(PORT_G, 14)
+/* Pins for ADCs */
+#define TEMP_ADC_CS_PIN       GPIO_PIN(PORT_D, 0)  // pin 
+#define HUMID_ADC_CS_PIN      GPIO_PIN(PORT_D, 0)  // pin 72
 
-#define LED_D3_PIN          GPIO_PIN(PORT_A, 0)
-#define LED_D4_PIN          GPIO_PIN(PORT_A, 1)
-#define LED_D5_PIN          GPIO_PIN(PORT_A, 2)
-#define LED_D6_PIN          GPIO_PIN(PORT_A, 3)
-#define LED_D7_PIN          GPIO_PIN(PORT_A, 4)
-#define LED_D8_PIN          GPIO_PIN(PORT_A, 5)
-#define LED_D9_PIN          GPIO_PIN(PORT_A, 6)
-#define LED_D10_PIN          GPIO_PIN(PORT_A, 7)
+#define LED_D3_PIN            GPIO_PIN(PORT_A, 0)
+#define LED_D4_PIN            GPIO_PIN(PORT_A, 1)
+#define LED_D5_PIN            GPIO_PIN(PORT_A, 2)
+#define LED_D6_PIN            GPIO_PIN(PORT_A, 3)
+#define LED_D7_PIN            GPIO_PIN(PORT_A, 4)
+#define LED_D8_PIN            GPIO_PIN(PORT_A, 5)
+#define LED_D9_PIN            GPIO_PIN(PORT_A, 6)
+#define LED_D10_PIN           GPIO_PIN(PORT_A, 7)
 
 /* Pins for UART interface */
-#define UART_TX_PIN     (GPIO_PIN(PORT_F, 5))
-#define UART_RX_PIN     (GPIO_PIN(PORT_F, 4))
+#define UART_TX_PIN          (GPIO_PIN(PORT_F, 5))
+#define UART_RX_PIN          (GPIO_PIN(PORT_F, 4))
 
 static struct storage_dev_t dev = {
     sdcard_cache_read,
@@ -121,7 +122,9 @@ static struct storage_dev_t dev = {
 };
 
 struct sdcard_spi_dev_t sdcard_dev;
-struct mcp3201_spi_dev_t adc_dev;
+struct mcp3201_spi_dev_t temp_adc_dev;
+struct mcp3201_spi_dev_t humid_adc_dev;
+
 unsigned long int sample_counter = 0;
 int sample_fd;
 
@@ -132,14 +135,26 @@ void timer2_callback(void)
     LCD_PutLongInt(sample_counter);
 }
 
+float calc_temp_degree_c(int N)
+{
+    // TODO: use propper calculations
+    return N*50/4095;
+}
+
+unsigned int calc_humidity_percent(int N, float temp)
+{
+    // TODO: use propper calculations
+    return (unsigned int)N/40.95;
+}
+
 void timer3_callback(void)
 {
     int ret;
     char buffer[128];
     unsigned int len = 0;
-    unsigned int result = mcp3201_get_sample(&adc_dev);
-    //printf("%ld\n\n", i);
-    sprintf(buffer, "%d\n", result);
+    float temp = calc_temp_degree_c(mcp3201_get_sample(&temp_adc_dev));
+    unsigned int humidity = calc_humidity_percent(mcp3201_get_sample(&humid_adc_dev), temp);
+    sprintf(buffer, "2018/11/20 %fºC %d%%\n", temp, humidity);
     len = strlen(buffer);
     ret = fat16_write(sample_fd, buffer, len);
     if (ret < 0 || (unsigned int)ret != len) {
@@ -181,11 +196,12 @@ void configure_periph()
     gpio_init_out(MOSI_PIN, 0);
     gpio_init_in(MISO_PIN);
     gpio_init_out(SCK_PIN, 0);
-    gpio_init_out(SD_CS_PIN, 1);
-    gpio_init_out(ADC_CS_PIN, 1);
     RPOR9bits.RP19R = 0x000a;       /* SPI1 - MOSI */
     RPINR22bits.SDI2R = 0x001a;     /* SPI1 - MISO */
     RPOR10bits.RP21R = 0x000b;        /* SPI1 - SCK */
+    gpio_init_out(SD_CS_PIN, 1);
+    gpio_init_out(TEMP_ADC_CS_PIN, 1);
+    gpio_init_out(HUMID_ADC_CS_PIN, 1);
     
     gpio_init_out(LED_D3_PIN, 0);
 
@@ -210,8 +226,11 @@ int main(void) {
     
     print_reset_cause();
 
-    adc_dev.spi_num = SPI_2;
-    adc_dev.cs_pin = ADC_CS_PIN;
+    temp_adc_dev.spi_num = SPI_2;
+    temp_adc_dev.cs_pin = TEMP_ADC_CS_PIN;
+
+    humid_adc_dev.spi_num = SPI_2;
+    humid_adc_dev.cs_pin = HUMID_ADC_CS_PIN;
 
     sdcard_dev.spi_num = SPI_2;
     sdcard_dev.cs_pin = SD_CS_PIN;
@@ -230,7 +249,6 @@ int main(void) {
         DBG_error( "Reading uSD card" ) ;
     }
     
-
     sample_fd = fat16_open("/SAMPLES.TXT", 'w');
     if (sample_fd < 0)
         DBG_error("failed to open file for write");
