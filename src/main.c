@@ -79,7 +79,7 @@
 #include "periph/uart.h"
 #include "utils.h"
 
-#define SAMPLE_CNT 204800000 /* @ Fs=2370.3 Hz = 24h */
+#define SAMPLE_CNT 100000
 
 #ifndef FIRMWARE_VERSION
 #define FIRMWARE_VERSION "dev"
