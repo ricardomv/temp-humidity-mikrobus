@@ -32,6 +32,7 @@
           <itemPath>src/periph/core_timer.h</itemPath>
           <itemPath>src/periph/timer.h</itemPath>
           <itemPath>src/periph/uart.h</itemPath>
+          <itemPath>src/periph/rtcc.h</itemPath>
         </logicalFolder>
         <itemPath>src/utils.h</itemPath>
       </logicalFolder>
@@ -70,6 +71,7 @@
           <itemPath>src/periph/watchdog.c</itemPath>
           <itemPath>src/periph/timer.c</itemPath>
           <itemPath>src/periph/uart.c</itemPath>
+          <itemPath>src/periph/rtcc.c</itemPath>
         </logicalFolder>
         <itemPath>src/main.c</itemPath>
         <itemPath>src/utils.c</itemPath>

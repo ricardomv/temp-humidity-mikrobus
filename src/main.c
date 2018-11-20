@@ -77,6 +77,7 @@
 #include "periph/timer.h"
 #include "periph/watchdog.h"
 #include "periph/uart.h"
+#include "periph/rtcc.h"
 #include "utils.h"
 
 #define SAMPLE_CNT 204800000 /* @ Fs=2370.3 Hz = 24h */
@@ -173,6 +174,9 @@ void configure_periph()
     /* Configure timer 3 to aquire sample */
     timer_power_up(TIMER_3);
     timer_configure(TIMER_3, TIMER3_PRESCALER_64, 50, 1);
+    
+    /* Configure rtcc */
+    RTCC_Initialize();
     
     LCD_Initialize();
     DBG("LCD Initialized");
