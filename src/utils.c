@@ -9,6 +9,7 @@
 #include "xc.h"
 #include "utils.h"
 #include "drivers/mbr.h"
+#include "periph/mcu.h"
 
 /**
  * @brief Try to find a FAT16 partition on the SD card
@@ -46,3 +47,19 @@ uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
     return first_sector;
 }
 
+void print_reset_cause(void)
+{
+    switch (mcu_get_reset_cause()) {
+        case BOR_RESET:
+            DBG_stop("Brownout caused reset");
+            break;
+        case SOFT_RESET:
+            DBG_stop("SOFT_RESET");
+            break;
+        case WATCHDOG_RESET:
+            DBG_stop("Watchdog caused reset");
+            break;
+        default:
+            break;
+    }
+}

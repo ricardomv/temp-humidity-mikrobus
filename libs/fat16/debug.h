@@ -21,8 +21,8 @@
 #ifndef __FAT16_DEBUG_H
 #define __FAT16_DEBUG_H
 
-#ifndef NDEBUG
-#define NDEBUG
+#ifndef FAT16_NDEBUG
+#define FAT16_NDEBUG
 #endif
 
 #ifndef LOG
@@ -30,7 +30,7 @@
 #define LOG printf
 #endif
 
-#ifndef NDEBUG
+#ifndef FAT16_NDEBUG
 #define FAT16DBG(...) do { LOG(__VA_ARGS__); } while (0)
 #else
 #define FAT16DBG(...)
