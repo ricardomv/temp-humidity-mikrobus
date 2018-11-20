@@ -33,6 +33,7 @@
           <itemPath>src/periph/timer.h</itemPath>
           <itemPath>src/periph/uart.h</itemPath>
         </logicalFolder>
+        <itemPath>src/utils.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"
@@ -71,6 +72,7 @@
           <itemPath>src/periph/uart.c</itemPath>
         </logicalFolder>
         <itemPath>src/main.c</itemPath>
+        <itemPath>src/utils.c</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"

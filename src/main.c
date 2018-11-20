@@ -77,6 +77,7 @@
 #include "periph/timer.h"
 #include "periph/watchdog.h"
 #include "periph/uart.h"
+#include "utils.h"
 
 #define SAMPLE_CNT 204800000 /* @ Fs=2370.3 Hz = 24h */
 
@@ -119,57 +120,6 @@ static struct storage_dev_t dev = {
     sdcard_cache_seek
 };
 
-static void DBG(const char *reason)
-{
-    printf("%s\n", reason);
-}
-
-static void DBG_stop(const char *reason)
-{
-    printf("%s\n", reason);
-    while (1);
-}
-
-static void DBG_error(const char *reason)
-{
-    LCD_ClearScreen();
-    printf("Error: %s\n", reason);
-    while (1);
-}
-
-/**
- * @brief Try to find a FAT16 partition on the SD card
- *
- * @return First sector of the FAT16 partition, 0 if no
- *         partition was found.
- */
-static uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
-{
-    unsigned int i;
-    uint32_t first_sector = 0;
-
-    DBG("Reading MBR...");
-    mbr_read_partition_table(dev);
-
-    DBG("Looking for a FAT16 partition...");
-    for (i = 0; i < PARTITION_ENTRY_COUNT; ++i) {
-        struct partition_info_t p = mbr_get_partition_info(i);
-        if ((p.status == BOOTABLE_PARTITION || p.status == INACTIVE_PARTITION)
-        &&  p.type == FAT16_PARTITION_TYPE) {
-            uint32_t size_100kB = p.size / 100000; /* size in 100kB unit */
-            printf("Found FAT16 partition at entry %u\n", i);
-            printf("\tstart_sector: %lu\n", p.start_sector);
-            printf("\tsize: %lu bytes (%lu.%lu MB)\n", p.size, size_100kB / 10, size_100kB % 10);
-            first_sector = p.start_sector;
-            break;
-        }
-    }
-    if (i == PARTITION_ENTRY_COUNT)
-        DBG_error("Failed to found a FAT16 partition");
-
-    return first_sector;
-}
-
 struct sdcard_spi_dev_t sdcard_dev;
 struct mcp3201_spi_dev_t adc_dev;
 unsigned long int sample_counter = 0;
@@ -200,23 +150,6 @@ void timer3_callback(void)
         timer_stop(TIMER_3);
 }
 
-void print_reset_cause()
-{
-    switch (mcu_get_reset_cause()) {
-        case BOR_RESET:
-            DBG_stop("Brownout caused reset");
-            break;
-        case SOFT_RESET:
-            DBG_stop("SOFT_RESET");
-            break;
-        case WATCHDOG_RESET:
-            DBG_stop("Watchdog caused reset");
-            break;
-        default:
-            break;
-    }
-}
-
 void configure_periph()
 {
     mcu_set_system_clock(8000000LU);
@@ -236,7 +169,6 @@ void configure_periph()
     /* Configure timer 2 to blink LED */
     timer_power_up(TIMER_2);
     timer_configure(TIMER_2, TIMER2_PRESCALER_64, 15000, 1);
-    timer_start(TIMER_2);
     
     /* Configure timer 3 to aquire sample */
     timer_power_up(TIMER_3);
@@ -303,6 +235,8 @@ int main(void) {
     if (sample_fd < 0)
         DBG_error("failed to open file for write");
 
+    /* Start statistics timer*/
+    timer_start(TIMER_2);
     /* Start data acquisition*/
     timer_start(TIMER_3);
     
