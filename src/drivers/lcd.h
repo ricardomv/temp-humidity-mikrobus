@@ -74,6 +74,7 @@ void LCD_PutString(char* inputString, uint16_t length);
 void LCD_PutChar(char);
 
 void LCD_PutInt (int n);
+void LCD_PutLongInt (unsigned long int n);
 
 /*********************************************************************
 * Function: void LCD_ClearScreen(void);

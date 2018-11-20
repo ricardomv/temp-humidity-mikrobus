@@ -236,6 +236,15 @@ void LCD_PutInt (int n)
 
     LCD_PutString(s, strlen(s));
 }
+
+void LCD_PutLongInt (unsigned long int n)
+{
+    char s[6] = {0};
+
+    sprintf(s, "%lu", n);
+
+    LCD_PutString(s, strlen(s));
+}
 /*********************************************************************
  * Function: void LCD_ClearScreen(void);
  *

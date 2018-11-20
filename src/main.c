@@ -129,7 +129,7 @@ void timer2_callback(void)
 {
     gpio_toggle(LED_D3_PIN);
     LCD_ClearScreen();
-    LCD_PutInt(sample_counter);
+    LCD_PutLongInt(sample_counter);
 }
 
 void timer3_callback(void)
