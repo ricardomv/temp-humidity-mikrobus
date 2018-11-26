@@ -98,8 +98,8 @@ static const char *welcome_msg = "Proj SEP firmware " FIRMWARE_VERSION
 #define SD_CS_PIN             GPIO_PIN(PORT_G, 9)
 
 /* Pins for ADCs */
-#define TEMP_ADC_CS_PIN       GPIO_PIN(PORT_D, 0)  // pin 
-#define HUMID_ADC_CS_PIN      GPIO_PIN(PORT_D, 0)  // pin 72
+#define TEMP_ADC_CS_PIN       GPIO_PIN(PORT_F, 2)  // pin 51 pim / 52 device / TX mikrobus
+#define HUMID_ADC_CS_PIN      GPIO_PIN(PORT_D, 0)  // pin 72 / PWM mikrobus
 
 #define LED_D3_PIN            GPIO_PIN(PORT_A, 0)
 #define LED_D4_PIN            GPIO_PIN(PORT_A, 1)
