@@ -140,6 +140,12 @@ void timer2_callback(void)
 {
     gpio_toggle(LED_D3_PIN);
     LCD_ClearScreen();
+    LCD_PutString("T: ", 3);
+    //LCD_PutInt(current_temp);
+    LCD_PutString(" H: ", 4);
+    //LCD_PutInt(current_humidity);
+    LCD_PutChar('\n');
+    LCD_PutChar('\r');
     LCD_PutLongInt(sample_counter);
 }
 
@@ -160,7 +166,7 @@ void timer3_callback(void)
     printf("%s", buffer);
     if (ret < 0 || (unsigned int)ret != len) {
         fat16_close(sample_fd);
-        DBG_error("failed to write to file");
+        DBG_error("failed to write to file\n");
     }
     if(sample_counter++ > SAMPLE_CNT)
         timer_stop(TIMER_3);
@@ -191,7 +197,7 @@ void configure_periph()
     timer_configure(TIMER_3, TIMER3_PRESCALER_64, 50, 1);
     
     LCD_Initialize();
-    DBG("LCD Initialized");
+    DBG("LCD Initialized\n");
     
     /* SPI2 */
     gpio_init_out(MOSI_PIN, 0);
@@ -213,7 +219,8 @@ void configure_periph()
     
     /* Configure uart */
     uart_power_up(UART_1);
-    uart_configure(UART_1, UART_BD_9600);
+    if(uart_configure(UART_1, UART_BD_57600))
+        DBG_error("Failed to configure UART\n");
     uart_enable(UART_1);
 }
 
@@ -239,7 +246,7 @@ int main(void) {
     sdcard_dev.cs_pin = SD_CS_PIN;
 
     if (sdcard_init(&sdcard_dev))
-        DBG_error("sdcard_init failed");
+        DBG_error("Failed SD card initialization\n");
 
     sdcard_cache_init(sdcard_dev);
 
@@ -249,13 +256,13 @@ int main(void) {
         partition_offset *= SDCARD_BLOCK_LENGTH;
         fat16_init(dev, partition_offset);
     } else {
-        DBG_error( "Reading uSD card" ) ;
+        DBG_error( "Reading SD card\n" ) ;
     }
     
     sample_fd = fat16_open("/SAMPLES.TXT", 'w');
     if (sample_fd < 0)
-        DBG_error("failed to open file for write");
-
+        DBG_error("Failed to open file \"%s\" for write\n", "/SAMPLES.TXT");
+    
     /* Start statistics timer*/
     timer_start(TIMER_2);
     /* Start data acquisition*/
@@ -266,8 +273,9 @@ int main(void) {
     
     fat16_close(sample_fd);
     sdcard_cache_flush();
-    
-    printf("DONE");
+
+    printf("Entering mcu sleep mode.\n");
+    LCD_ClearScreen();
     LCD_PutString("DONE", 4);
 
     mcu_sleep();

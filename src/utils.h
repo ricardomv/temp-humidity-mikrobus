@@ -44,7 +44,7 @@
 #ifndef NDEBUG
 #define DBG(...) do { LOG(__VA_ARGS__); } while (0)
 #define DBG_stop(...) do { LOG(__VA_ARGS__); } while (1)
-#define DBG_error(...) do { LOG("Error:"__VA_ARGS__); } while (1)
+#define DBG_error(...) do { LOG("Error: "__VA_ARGS__); } while (1)
 #else
 #define DBG(...)
 #define DBG_stop(...) while (1);

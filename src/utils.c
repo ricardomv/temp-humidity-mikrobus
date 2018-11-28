@@ -23,10 +23,10 @@ uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
     unsigned int i;
     uint32_t first_sector = 0;
 
-    DBG("Reading MBR...");
+    DBG("Reading MBR...\n");
     mbr_read_partition_table(dev);
 
-    DBG("Looking for a FAT16 partition...");
+    DBG("Looking for a FAT16 partition...\n");
     for (i = 0; i < PARTITION_ENTRY_COUNT; ++i) {
         struct partition_info_t p = mbr_get_partition_info(i);
         if ((p.status == BOOTABLE_PARTITION || p.status == INACTIVE_PARTITION)
@@ -42,7 +42,7 @@ uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev)
         }
     }
     if (i == PARTITION_ENTRY_COUNT)
-        DBG("Failed to found a FAT16 partition");
+        DBG("Failed to found a FAT16 partition\n");
 
     return first_sector;
 }
@@ -51,13 +51,13 @@ void print_reset_cause(void)
 {
     switch (mcu_get_reset_cause()) {
         case BOR_RESET:
-            DBG_stop("Brownout caused reset");
+            DBG_stop("Brownout caused reset\n");
             break;
         case SOFT_RESET:
-            DBG_stop("SOFT_RESET");
+            DBG_stop("SOFT_RESET\n");
             break;
         case WATCHDOG_RESET:
-            DBG_stop("Watchdog caused reset");
+            DBG_stop("Watchdog caused reset\n");
             break;
         default:
             break;
