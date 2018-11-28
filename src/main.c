@@ -62,24 +62,30 @@
 #include "xc.h"
 #include <stdio.h>
 #include <string.h>
+
 #include "periph/spi.h"
 #include "periph/mcu.h"
 #include "periph/gpio.h"
-#include "drivers/sdcard.h"
-#include "drivers/sdcard_cache.h"
-#include "drivers/mbr.h"
-#include "drivers/lcd.h"
-#include "drivers/mcp3201.h"
-#include "fat16/fat16.h"
 #include "periph/core_timer.h"
 #include "periph/periph_conf.h"
 #include "periph/timer1.h"
 #include "periph/timer.h"
 #include "periph/watchdog.h"
 #include "periph/uart.h"
+
+#include "drivers/sdcard.h"
+#include "drivers/sdcard_cache.h"
+#include "drivers/mbr.h"
+#include "drivers/lcd.h"
+#include "drivers/mcp3201.h"
+#include "drivers/sensors.h"
+
+#include "fat16/fat16.h"
+
 #include "utils.h"
 
-#define SAMPLE_CNT 100000
+#define SAMPLE_CNT            100000
+#define VREF_ADC              3.3  // V
 
 #ifndef FIRMWARE_VERSION
 #define FIRMWARE_VERSION "dev"
@@ -127,6 +133,8 @@ struct mcp3201_spi_dev_t humid_adc_dev;
 
 unsigned long int sample_counter = 0;
 int sample_fd;
+int temp_degree_C = 0;
+int true_RH = 0;
 
 void timer2_callback(void)
 {
@@ -135,28 +143,21 @@ void timer2_callback(void)
     LCD_PutLongInt(sample_counter);
 }
 
-float calc_temp_degree_c(int N)
-{
-    // TODO: use propper calculations
-    return N*50/4095;
-}
-
-unsigned int calc_humidity_percent(int N, float temp)
-{
-    // TODO: use propper calculations
-    return (unsigned int)N/40.95;
-}
-
 void timer3_callback(void)
 {
     int ret;
-    char buffer[128];
+    char buffer[30];
     unsigned int len = 0;
-    float temp = calc_temp_degree_c(mcp3201_get_sample(&temp_adc_dev));
-    unsigned int humidity = calc_humidity_percent(mcp3201_get_sample(&humid_adc_dev), temp);
-    sprintf(buffer, "2018/11/20 %fºC %d%%\n", temp, humidity);
+    float sensor_RH;
+    
+    temp_degree_C = ad592_get_temp_degree_c(mcp3201_get_voltage(&temp_adc_dev));
+    sensor_RH = hih5030_get_sensor_rh(mcp3201_get_voltage(&humid_adc_dev), humid_adc_dev.v_ref);
+    true_RH = hih5030_get_true_rh(sensor_RH, temp_degree_C);
+
+    sprintf(buffer, "2018/11/20, %.1f, %d\n", (double)temp_degree_C, true_RH);
     len = strlen(buffer);
     ret = fat16_write(sample_fd, buffer, len);
+    printf("%s", buffer);
     if (ret < 0 || (unsigned int)ret != len) {
         fat16_close(sample_fd);
         DBG_error("failed to write to file");
@@ -228,9 +229,11 @@ int main(void) {
 
     temp_adc_dev.spi_num = SPI_2;
     temp_adc_dev.cs_pin = TEMP_ADC_CS_PIN;
+    temp_adc_dev.v_ref = VREF_ADC;
 
     humid_adc_dev.spi_num = SPI_2;
     humid_adc_dev.cs_pin = HUMID_ADC_CS_PIN;
+    humid_adc_dev.v_ref = VREF_ADC;
 
     sdcard_dev.spi_num = SPI_2;
     sdcard_dev.cs_pin = SD_CS_PIN;

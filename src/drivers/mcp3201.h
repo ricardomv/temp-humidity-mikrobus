@@ -36,6 +36,7 @@
 struct mcp3201_spi_dev_t {
     unsigned int spi_num;
     unsigned int cs_pin;
+    float v_ref;
 };
 // Comment a function and leverage automatic documentation with slash star star
 /**
@@ -60,6 +61,7 @@ struct mcp3201_spi_dev_t {
  */
 
 unsigned int mcp3201_get_sample();
+float mcp3201_get_voltage(struct mcp3201_spi_dev_t *dev);
 
 #endif	/* MCP3201_H */
 

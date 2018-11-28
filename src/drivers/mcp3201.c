@@ -10,11 +10,7 @@
 #include <stdio.h>
 #include "periph/spi.h"
 #include "periph/gpio.h"
-
-struct mcp3201_spi_dev_t {
-    unsigned int spi_num;
-    unsigned int cs_pin;
-};
+#include "mcp3201.h"
 
 unsigned int mcp3201_get_sample(struct mcp3201_spi_dev_t *dev)
 {
@@ -32,4 +28,8 @@ unsigned int mcp3201_get_sample(struct mcp3201_spi_dev_t *dev)
     result = result & 0x0fff;
     
     return result;
+}
+
+float mcp3201_get_voltage(struct mcp3201_spi_dev_t *dev) {
+    return mcp3201_get_sample(dev) / 4095 * dev->v_ref;
 }

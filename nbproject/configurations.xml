@@ -21,6 +21,7 @@
           <itemPath>src/drivers/sdcard_cache.h</itemPath>
           <itemPath>src/drivers/mcp3201.h</itemPath>
           <itemPath>src/drivers/sdcard.h</itemPath>
+          <itemPath>src/drivers/sensors.h</itemPath>
         </logicalFolder>
         <logicalFolder name="periph" displayName="periph" projectFiles="true">
           <itemPath>src/periph/timer1.h</itemPath>
@@ -59,6 +60,7 @@
           <itemPath>src/drivers/lcd.c</itemPath>
           <itemPath>src/drivers/sdcard_cache.c</itemPath>
           <itemPath>src/drivers/mcp3201.c</itemPath>
+          <itemPath>src/drivers/sensors.c</itemPath>
         </logicalFolder>
         <logicalFolder name="periph" displayName="periph" projectFiles="true">
           <itemPath>src/periph/spi.c</itemPath>
