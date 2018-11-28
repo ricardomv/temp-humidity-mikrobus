@@ -84,6 +84,7 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
+    <Elem>.</Elem>
     <Elem>libs</Elem>
     <Elem>src</Elem>
   </sourceRootList>
