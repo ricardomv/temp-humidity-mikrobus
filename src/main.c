@@ -134,19 +134,26 @@ struct mcp3201_spi_dev_t humid_adc_dev;
 unsigned long int sample_counter = 0;
 int sample_fd;
 int temp_degree_C = 0;
-int true_RH = 0;
+unsigned int true_RH = 0;
+
+struct sdcard_cache_stats_t stats;
 
 void timer2_callback(void)
 {
     gpio_toggle(LED_D3_PIN);
     LCD_ClearScreen();
-    LCD_PutString("T: ", 3);
-    //LCD_PutInt(current_temp);
-    LCD_PutString(" H: ", 4);
-    //LCD_PutInt(current_humidity);
-    LCD_PutChar('\n');
-    LCD_PutChar('\r');
+    LCD_PutString("T:", 3);
+    LCD_PutInt(temp_degree_C/10);
+    LCD_PutChar('.');
+    LCD_PutInt(temp_degree_C%10);
+    LCD_PutString("\xDF""C H:", 5);
+    LCD_PutInt(true_RH);
+    LCD_PutString("%\n\r",3);
     LCD_PutLongInt(sample_counter);
+    stats = sdcard_cache_get_stats();
+    LCD_PutString(" ",1);
+    LCD_PutLongInt(stats.write_success/2);
+    LCD_PutString("kB",2);
 }
 
 void timer3_callback(void)
@@ -293,6 +300,14 @@ int main(void) {
     
     fat16_close(sample_fd);
     sdcard_cache_flush();
+    
+    stats = sdcard_cache_get_stats();
+    printf("\nStatistics of the SD card cache:\n");
+    printf("Evictions: %lu\n", stats.evictions);
+    printf("Write success: %lu\n", stats.write_success);
+    printf("Read success: %lu\n", stats.read_success);
+    printf("Write error: %lu\n", stats.write_error);
+    printf("Read error: %lu\n", stats.read_error);
 
     printf("Entering mcu sleep mode.\n");
     LCD_PutString("\n\rDONE            ", 17);
