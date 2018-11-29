@@ -229,6 +229,7 @@ int sdcard_init(struct sdcard_spi_dev_t *dev)
     *  - Set BRG to 0
     */
     PMD4 &= ~_PMD4_REFOMD_MASK;
+    REFOCONHbits.RODIV = 2;
     REFOCONL = _REFOCONL_ROEN_MASK;
     spi_disable(dev->spi_num);
 

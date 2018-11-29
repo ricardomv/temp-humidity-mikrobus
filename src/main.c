@@ -19,7 +19,7 @@
 #pragma config BSLIM = 8191    // Boot Segment Flash Page Address Limit bits->
 
 // FOSCSEL
-#pragma config FNOSC = FRC    // Oscillator Source Selection->Internal Fast RC (FRC)
+#pragma config FNOSC = DCO    // Oscillator Source Selection->Internal Fast RC (FRC)
 #pragma config PLLMODE = DISABLED    // PLL Mode Selection->No PLL used; PLLEN bit is not available
 #pragma config IESO = ON    // Two-speed Oscillator Start-up Enable bit->Start up device with FRC, then switch to user-selected oscillator source
 
@@ -34,7 +34,7 @@
 // FWDT
 #pragma config WDTPS = PS32768    // Watchdog Timer Postscaler bits->1:32768
 #pragma config FWPSA = PR128    // Watchdog Timer Prescaler bit->1:128
-#pragma config FWDTEN = OFF    // Watchdog Timer Enable bits->WDT and SWDTEN disabled
+#pragma config FWDTEN = ON_SWDTEN    // Watchdog Timer Enable bits->WDT Enabled/Disabled (controlled using SWDTEN bit)
 #pragma config WINDIS = OFF    // Watchdog Timer Window Enable bit->Watchdog Timer in Non-Window mode
 #pragma config WDTWIN = WIN25    // Watchdog Timer Window Select bits->WDT Window is 25% of WDT period
 #pragma config WDTCMX = WDTCLK    // WDT MUX Source Select bits->WDT clock source is determined by the WDTCLK Configuration bits
@@ -174,9 +174,29 @@ void timer3_callback(void)
 
 void configure_periph()
 {
-    mcu_set_system_clock(8000000LU);
+    mcu_set_system_clock(30000000LU);
     watchdog_disable();
     
+    
+    // CPDIV 1:1; PLLEN disabled; DOZE 1:8; RCDIV PRIPLL; DOZEN disabled; ROI disabled; 
+    CLKDIV = 0x3300;
+    // STOR disabled; STORPOL Interrupt when STOR is 1; STSIDL disabled; STLPOL Interrupt when STLOCK is 1; STLOCK disabled; STSRC SOSC; STEN disabled; TUN Center frequency; 
+    OSCTUN = 0x0000;
+    // ROEN disabled; ROSEL FOSC; ROSIDL disabled; ROSWEN disabled; ROOUT disabled; ROSLP disabled; 
+    REFOCONL = 0x0000;
+    // RODIV 0; 
+    REFOCONH = 0x0000;
+    // ROTRIM 0; 
+    REFOTRIML = 0x0000;
+    // DCOTUN 0; 
+    DCOTUN = 0x0000;
+    // DCOFSEL 30; DCOEN disabled; 
+    DCOCON = 0x0F00;
+    // DIV 0; 
+    OSCDIV = 0x0000;
+    // TRIM 0; 
+    OSCFDIV = 0x0000;
+
     /* Configure timer 1 to enable mcu_delay, 1 tick = 1ms */
     timer1_power_up();
     timer1_configure(TIMER1_PRESCALER_1, 4000, 1);
@@ -190,11 +210,11 @@ void configure_periph()
     
     /* Configure timer 2 to blink LED */
     timer_power_up(TIMER_2);
-    timer_configure(TIMER_2, TIMER2_PRESCALER_64, 15000, 1);
+    timer_configure(TIMER_2, TIMER2_PRESCALER_256, 15000, 1);
     
     /* Configure timer 3 to aquire sample */
     timer_power_up(TIMER_3);
-    timer_configure(TIMER_3, TIMER3_PRESCALER_64, 50, 1);
+    timer_configure(TIMER_3, TIMER3_PRESCALER_64, 500, 1);
     
     LCD_Initialize();
     DBG("LCD Initialized\n");
@@ -219,7 +239,7 @@ void configure_periph()
     
     /* Configure uart */
     uart_power_up(UART_1);
-    if(uart_configure(UART_1, UART_BD_57600))
+    if(uart_configure(UART_1, UART_BD_115200))
         DBG_error("Failed to configure UART\n");
     uart_enable(UART_1);
 }
@@ -229,7 +249,7 @@ int main(void) {
     
     configure_periph();
 
-    printf("\033[2J");
+    printf("\033[2J"); // Clear console
     printf(welcome_msg);
     
     print_reset_cause();
@@ -275,8 +295,7 @@ int main(void) {
     sdcard_cache_flush();
 
     printf("Entering mcu sleep mode.\n");
-    LCD_ClearScreen();
-    LCD_PutString("DONE", 4);
+    LCD_PutString("\n\rDONE            ", 17);
 
     mcu_sleep();
 
