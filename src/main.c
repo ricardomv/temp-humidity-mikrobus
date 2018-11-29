@@ -72,6 +72,7 @@
 #include "periph/timer.h"
 #include "periph/watchdog.h"
 #include "periph/uart.h"
+#include "periph/rtcc.h"
 
 #include "drivers/sdcard.h"
 #include "drivers/sdcard_cache.h"
@@ -222,6 +223,9 @@ void configure_periph()
     /* Configure timer 3 to aquire sample */
     timer_power_up(TIMER_3);
     timer_configure(TIMER_3, TIMER3_PRESCALER_64, 500, 1);
+    
+    /* Configure rtcc */
+    RTCC_Initialize();
     
     LCD_Initialize();
     DBG("LCD Initialized\n");
