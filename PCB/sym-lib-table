@@ -1,0 +1,6 @@
+(sym_lib_table
+  (lib (name AD592BN)(type Legacy)(uri ${KIPRJMOD}/components/AD592BN.lib)(options "")(descr ""))
+  (lib (name HIH-5030-001)(type Legacy)(uri ${KIPRJMOD}/components/HIH-5030-001.lib)(options "")(descr ""))
+  (lib (name MCP1501-SOT23)(type Legacy)(uri ${KIPRJMOD}/components/MCP1501-SOT23.lib)(options "")(descr ""))
+  (lib (name MCP1501T-18E_SN)(type Legacy)(uri ${KIPRJMOD}/components/MCP1501T-18E_SN.lib)(options "")(descr ""))
+)

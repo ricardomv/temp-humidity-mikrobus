@@ -1,0 +1,30 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#(c) SnapEDA 2016 (snapeda.com)
+#This work is licensed under a Creative Commons Attribution-ShareAlike 4.0 International License (CC BY-SA) with Design Exception 1.0
+#
+# HIH-5030-001
+#
+DEF HIH-5030-001 U 0 40 Y Y 1 L N
+F0 "U" -451 426 50 H V L BNN
+F1 "HIH-5030-001" -451 -426 50 H V L BNN
+F2 "HONEYWELL_HIH-5030-001" 0 0 50 H I L BNN
+F3 "Housed Sensor Honeywell Sensing" 0 0 50 H I L BNN
+F4 "HIH-5030-001" 0 0 50 H I L BNN
+F5 "None" 0 0 50 H I L BNN
+F6 "Unavailable" 0 0 50 H I L BNN
+F7 "Honeywell Sensing" 0 0 50 H I L BNN
+F8 "Sensor: humidity sensor; Range: 0÷100% RH; ±3%; 2.7÷5.5VDC" 0 0 50 H I L BNN
+DRAW
+P 2 0 0 10 0 400 0 -300 N
+P 2 0 0 10 0 -300 -400 -300 N
+P 2 0 0 10 -400 -300 -400 400 N
+P 2 0 0 10 -400 400 0 400 N
+X +VE 3 200 300 200 L 40 40 0 0 W 
+X TAB 4 200 -200 200 L 40 40 0 0 P 
+X -VE 1 200 -100 200 L 40 40 0 0 W 
+X OUT 2 200 100 200 L 40 40 0 0 O 
+ENDDRAW
+ENDDEF
+#
+# End Library
