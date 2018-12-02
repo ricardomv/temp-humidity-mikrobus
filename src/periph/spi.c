@@ -60,6 +60,13 @@ void spi_configure(unsigned int spi_num, uint32_t frequency, enum SPI_MODE mode)
     SPIxBRGL(spi_num) = ((mcu_get_system_clock() >> 1) / (2 * frequency)) - 1;
 }
 
+void spi_set_baud(unsigned int spi_num, uint32_t frequency)
+{
+    if(frequency)
+        SPIxBRGL(spi_num) = ((mcu_get_system_clock() >> 1) / (2 * frequency)) - 1;
+    else
+        SPIxBRGL(spi_num) = 0;
+}
 
 void spi_enable(unsigned int spi_num)
 {

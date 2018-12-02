@@ -48,6 +48,7 @@ enum SPI_MODE {
  */
 void spi_configure(unsigned int spi_num, uint32_t frequency, enum SPI_MODE mode);
 
+void spi_set_baud(unsigned int spi_num, uint32_t frequency);
 /**
  * @brief Enable SPI module
  *
