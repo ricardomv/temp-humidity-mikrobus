@@ -12,6 +12,9 @@
 #include "periph/gpio.h"
 #include "mcp3201.h"
 
+#define ADC_BITS        12
+#define ADC_COUNTS      (1 << ADC_BITS)
+
 unsigned int mcp3201_get_sample(struct mcp3201_spi_dev_t *dev)
 {
     uint8_t rx_buffer[3] = {0};
@@ -31,5 +34,5 @@ unsigned int mcp3201_get_sample(struct mcp3201_spi_dev_t *dev)
 }
 
 float mcp3201_get_voltage(struct mcp3201_spi_dev_t *dev) {
-    return mcp3201_get_sample(dev) / 4095 * dev->v_ref;
+    return (mcp3201_get_sample(dev) / ADC_COUNTS) * dev->v_ref;
 }
