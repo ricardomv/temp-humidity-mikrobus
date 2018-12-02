@@ -230,25 +230,9 @@ int sdcard_init(struct sdcard_spi_dev_t *dev)
     */
     PMD4 &= ~_PMD4_REFOMD_MASK;
     REFOCONHbits.RODIV = 2;
-    REFOCONL = _REFOCONL_ROEN_MASK;
-    spi_disable(dev->spi_num);
+    REFOCONL = _REFOCONL_ROEN_MASK;    
 
-
-    switch (dev->spi_num) {
-        case SPI_1:
-            SPI1BRGL = 0;
-            SPI1CON1 |= _SPI1CON1_MCLKEN_MASK;
-            break;
-        case SPI_2:
-            SPI2BRGL = 0;
-            SPI2CON1 |= _SPI2CON1_MCLKEN_MASK;
-            break;
-        case SPI_3:
-            SPI3BRGL = 0;
-            SPI3CON1 |= _SPI3CON1_MCLKEN_MASK;
-            break;
-    }
-    spi_enable(dev->spi_num);
+    spi_set_baud(dev->spi_num, 0);
 
     return 0;
 }

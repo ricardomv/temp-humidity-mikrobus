@@ -62,10 +62,17 @@ void spi_configure(unsigned int spi_num, uint32_t frequency, enum SPI_MODE mode)
 
 void spi_set_baud(unsigned int spi_num, uint32_t frequency)
 {
-    if(frequency)
+    spi_disable(spi_num);
+
+    if(frequency){
         SPIxBRGL(spi_num) = ((mcu_get_system_clock() >> 1) / (2 * frequency)) - 1;
-    else
+        SPIxCON1L(spi_num) &= ~_SPI1CON1_MCLKEN_MASK;
+    } else {
         SPIxBRGL(spi_num) = 0;
+        SPI2CON1 |= _SPI2CON1_MCLKEN_MASK;
+    }
+
+    spi_enable(spi_num);
 }
 
 void spi_enable(unsigned int spi_num)
