@@ -61,6 +61,7 @@
 
 #include "xc.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 
@@ -144,16 +145,18 @@ struct tm current_time;
 
 void timer2_callback(void)
 {
+    char date_str[10];
     gpio_toggle(LED_D3_PIN);
     LCD_ClearScreen();
     LCD_PutString("T:", 3);
     LCD_PutInt(temp_degree_C/10);
     LCD_PutChar('.');
-    LCD_PutInt(temp_degree_C%10);
+    LCD_PutInt(abs(temp_degree_C%10));
     LCD_PutString("\xDF""C H:", 5);
     LCD_PutInt(true_RH);
     LCD_PutString("%\n\r",3);
-    LCD_PutLongInt(sample_counter);
+    strftime(date_str, sizeof(date_str), "%T", &current_time);
+    LCD_PutString(date_str, sizeof(date_str));
     stats = sdcard_cache_get_stats();
     LCD_PutString(" ",1);
     LCD_PutLongInt(stats.write_success/2);
@@ -164,7 +167,7 @@ void timer3_callback(void)
 {
     int ret;
     char buffer[30];
-    char date_str[15];
+    char date_str[20];
     unsigned int len = 0;
     float sensor_RH;
     
@@ -196,7 +199,6 @@ void rtcc_alarm_callback(void)
 {
     gpio_toggle(LED_D4_PIN);
 }
-
 
 void configure_periph()
 {
