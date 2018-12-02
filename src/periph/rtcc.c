@@ -128,8 +128,8 @@ bool RTCC_TimeGet(struct tm *currentTime)
     }
 
     register_value = DATEH;
-    currentTime->tm_year = ConvertBCDToHex((register_value & 0xFF00) >> 8);
-    currentTime->tm_mon = ConvertBCDToHex(register_value & 0x00FF);
+    currentTime->tm_year = 100 + ConvertBCDToHex((register_value & 0xFF00) >> 8);
+    currentTime->tm_mon = ConvertBCDToHex(register_value & 0x00FF) - 1;
     
     register_value = DATEL;
     currentTime->tm_mday = ConvertBCDToHex((register_value & 0xFF00) >> 8);
@@ -154,7 +154,7 @@ void RTCC_TimeSet(struct tm *initialTime)
    
 
    // set RTCC initial time
-   DATEH = (ConvertHexToBCD(initialTime->tm_year) << 8) | ConvertHexToBCD(initialTime->tm_mon) ;  // YEAR/MONTH-1
+   DATEH = (ConvertHexToBCD(initialTime->tm_year - 100) << 8) | ConvertHexToBCD(initialTime->tm_mon + 1) ;  // YEAR/MONTH-1
    DATEL = (ConvertHexToBCD(initialTime->tm_mday) << 8) | ConvertHexToBCD(initialTime->tm_wday) ;  // /DAY-1/WEEKDAY
    TIMEH = (ConvertHexToBCD(initialTime->tm_hour) << 8)  | ConvertHexToBCD(initialTime->tm_min); // /HOURS/MINUTES
    TIMEL = (ConvertHexToBCD(initialTime->tm_sec) << 8) ;   // SECOND
@@ -175,7 +175,7 @@ void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int cou
         ALMTIMEH = 0;
         ALMTIMEL = 0;
     } else {
-        ALMDATEH = (ConvertHexToBCD(alarmTime->tm_year) << 8) | ConvertHexToBCD(alarmTime->tm_mon) ;  // YEAR/MONTH-1
+        ALMDATEH = (ConvertHexToBCD(alarmTime->tm_year - 100) << 8) | ConvertHexToBCD(alarmTime->tm_mon + 1) ;  // YEAR/MONTH-1
         ALMDATEL = (ConvertHexToBCD(alarmTime->tm_mday) << 8) | ConvertHexToBCD(alarmTime->tm_wday) ;  // /DAY-1/WEEKDAY
         ALMTIMEH = (ConvertHexToBCD(alarmTime->tm_hour) << 8)  | ConvertHexToBCD(alarmTime->tm_min); // /HOURS/MINUTES
         ALMTIMEL = (ConvertHexToBCD(alarmTime->tm_sec) << 8) ;   // SECOND
@@ -258,8 +258,8 @@ bool RTCC_TimestampADataGet(struct tm *currentTime)
     }
   
     register_value = TSADATEH;
-    currentTime->tm_year = ConvertBCDToHex((register_value & 0xFF00) >> 8);
-    currentTime->tm_mon = ConvertBCDToHex(register_value & 0x00FF);
+    currentTime->tm_year = 100 + ConvertBCDToHex((register_value & 0xFF00) >> 8);
+    currentTime->tm_mon = ConvertBCDToHex(register_value & 0x00FF) - 1;
     
     register_value = TSADATEL;
     currentTime->tm_mday = ConvertBCDToHex((register_value & 0xFF00) >> 8);
