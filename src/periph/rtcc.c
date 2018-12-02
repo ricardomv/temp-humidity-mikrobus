@@ -87,21 +87,14 @@ void RTCC_Initialize(void)
    if(!RTCCTimeInitialized())
    {
        // set 2018-11-19 22-29-27
-       DATEH = 0x1811;    // Year/Month
-       DATEL = 0x1901;    // Date/Wday
-       TIMEH = 0x2229;    // hours/minutes
-       TIMEL = 0x2700;    // seconds
+       DATEH = 0x0001;    // Year/Month
+       DATEL = 0x0100;    // Date/Wday
+       TIMEH = 0x0000;    // hours/minutes
+       TIMEL = 0x0000;    // seconds
    }
 
-   // PWCPS 1:1; PS 1:1; CLKSEL FOSC/2; FDIV 0; 
-   RTCCON2L = 0x0003;
-   // DIV 1999999; 
-   RTCCON2H = 0x1E847F;
-   // PWCSTAB 0; PWCSAMP 0; 
-   RTCCON3L = 0x0000;
-
-   // RTCEN enabled; OUTSEL Alarm Event; PWCPOE disabled; PWCEN disabled; WRLOCK disabled; PWCPOL disabled; TSAEN disabled; RTCOE disabled; 
-   RTCCON1L = 0x8000; 
+   // DIV 16383; 
+   RTCCON2H = 0x3FFF;
 
    // Enable RTCC, clear RTCWREN 
    RTCCON1Lbits.RTCEN = 1;  
