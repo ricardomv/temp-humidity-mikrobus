@@ -25,8 +25,8 @@
 
 // FOSC
 #pragma config POSCMD = NONE    // Primary Oscillator Mode Select bits->Primary Oscillator disabled
-#pragma config OSCIOFCN = OFF    // OSC2 Pin Function bit->OSC2 is clock output
-#pragma config SOSCSEL = OFF    // SOSC Power Selection Configuration bits->Digital (SCLKI) mode
+#pragma config OSCIOFCN = ON    // OSC2 Pin Function bit->OSC2 is clock output
+#pragma config SOSCSEL = ON    // SOSC Power Selection Configuration bits->Digital (SCLKI) mode
 #pragma config PLLSS = PLL_PRI    // PLL Secondary Selection Configuration bit->PLL is fed by the Primary oscillator
 #pragma config IOL1WAY = ON    // Peripheral pin select configuration bit->Allow only one reconfiguration
 #pragma config FCKSM = CSDCMD    // Clock Switching Mode bits->Both Clock switching and Fail-safe Clock Monitor are disabled
@@ -62,6 +62,7 @@
 #include "xc.h"
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include "periph/spi.h"
 #include "periph/mcu.h"
@@ -139,6 +140,8 @@ unsigned int true_RH = 0;
 
 struct sdcard_cache_stats_t stats;
 
+struct tm current_time;
+
 void timer2_callback(void)
 {
     gpio_toggle(LED_D3_PIN);
@@ -161,24 +164,39 @@ void timer3_callback(void)
 {
     int ret;
     char buffer[30];
+    char date_str[15];
     unsigned int len = 0;
     float sensor_RH;
     
-    temp_degree_C = ad592_get_temp_degree_c(mcp3201_get_voltage(&temp_adc_dev));
-    sensor_RH = hih5030_get_sensor_rh(mcp3201_get_voltage(&humid_adc_dev), humid_adc_dev.v_ref);
+    RTCC_TimeGet(&current_time);
+
+    temp_degree_C = ad592_get_temp_degree_c(
+            mcp3201_get_voltage(&temp_adc_dev));
+    sensor_RH = hih5030_get_sensor_rh(
+            mcp3201_get_voltage(&humid_adc_dev), humid_adc_dev.v_ref);
+
     true_RH = hih5030_get_true_rh(sensor_RH, temp_degree_C);
 
-    sprintf(buffer, "2018/11/20, %.1f, %d\n", (double)temp_degree_C, true_RH);
+    strftime(date_str, sizeof(date_str), "%Y/%m/%d-%T", &current_time);
+
+    sprintf(buffer, "%s %.1f %d\n", date_str, (double)temp_degree_C/10, true_RH);
+
     len = strlen(buffer);
     ret = fat16_write(sample_fd, buffer, len);
-    printf("%s", buffer);
     if (ret < 0 || (unsigned int)ret != len) {
         fat16_close(sample_fd);
         DBG_error("failed to write to file\n");
     }
+    printf("%s", buffer);
     if(sample_counter++ > SAMPLE_CNT)
         timer_stop(TIMER_3);
 }
+
+void rtcc_alarm_callback(void)
+{
+    gpio_toggle(LED_D4_PIN);
+}
+
 
 void configure_periph()
 {
@@ -242,6 +260,7 @@ void configure_periph()
     gpio_init_out(HUMID_ADC_CS_PIN, 1);
     
     gpio_init_out(LED_D3_PIN, 0);
+    gpio_init_out(LED_D4_PIN, 0);
 
     /* Configure spi */
     spi_power_up(SPI_2);
@@ -289,7 +308,10 @@ int main(void) {
     } else {
         DBG_error( "Reading SD card\n" ) ;
     }
-    
+
+    RTCC_AlarmSet(NULL, EVERY_SECOND, 24);
+    IEC3bits.RTCIE = 1;     // Enable alarm interrupt
+
     sample_fd = fat16_open("/SAMPLES.TXT", 'w');
     if (sample_fd < 0)
         DBG_error("Failed to open file \"%s\" for write\n", "/SAMPLES.TXT");

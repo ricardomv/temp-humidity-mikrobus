@@ -67,6 +67,21 @@
 typedef struct tm bcdTime_t;
 
 /**
+ Section: enums
+*/
+enum RTCC_REPEAT {
+    EVERY_HALF_SEC,
+    EVERY_SECOND,
+    EVERY_MINUTE,
+    EVERY_10_MIN,
+    EVERY_HOUR,
+    EVERY_DAY,
+    EVERY_WEEK,
+    EVERY_MONTH,
+    EVERY_YEAR,
+};
+
+/**
  Section: Interface Routines
 */
 
@@ -148,8 +163,32 @@ bool RTCC_TimeGet(struct tm *currentTime);
   @Example
     Refer to the example for the function RTCC_Initialize
 */
-
 void RTCC_TimeSet(struct tm *initialTime);
+
+/**
+  @Summary
+    Sets the alarm time for the RTCC peripheral
+
+  @Description
+    This function sets the alarm time for the RTCC peripheral. This
+    function uses the C library type struct tm parameter.
+
+  @Preconditions
+    None
+
+  @Param
+    alarmTime - This parameter sets the values.
+    mask - Sets the period for repetition
+    counter - Sets the number of times the alarm will repeat
+
+  @Returns
+    None
+
+  @Example
+    RTCC_AlarmSet(time, EVERY_HOUR, 24);
+*/
+void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int counter);
+
 /**
   @Summary
     Returns the current time from the RTCC peripheral

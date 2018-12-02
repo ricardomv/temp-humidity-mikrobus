@@ -61,6 +61,17 @@ static bool RTCCTimeInitialized(void);
 static uint8_t ConvertHexToBCD(uint8_t hexvalue);
 static uint8_t ConvertBCDToHex(uint8_t bcdvalue);
 
+void __attribute__ ((weak)) rtcc_alarm_callback(void)
+{
+
+}
+
+void __attribute__((__interrupt__, __auto_psv__)) _RTCCInterrupt(void)
+{
+    rtcc_alarm_callback();
+    IFS3bits.RTCIF = 0;   // RTC interrupt flag - clear
+}
+
 /**
 // Section: Driver Interface Function Definitions
 */
@@ -152,6 +163,27 @@ void RTCC_TimeSet(struct tm *initialTime)
    RTCCON1Lbits.RTCEN = 1;  
    RTCC_Lock();
 
+}
+
+void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int counter)
+{
+    RTCCON1Hbits.ALRMEN = 0;     // Disable alarm to avoid a false alarm event
+
+    if(alarmTime == NULL) {
+        ALMDATEH = 0;
+        ALMDATEL = 0;
+        ALMTIMEH = 0;
+        ALMTIMEL = 0;
+    } else {
+        ALMDATEH = (ConvertHexToBCD(alarmTime->tm_year) << 8) | ConvertHexToBCD(alarmTime->tm_mon) ;  // YEAR/MONTH-1
+        ALMDATEL = (ConvertHexToBCD(alarmTime->tm_mday) << 8) | ConvertHexToBCD(alarmTime->tm_wday) ;  // /DAY-1/WEEKDAY
+        ALMTIMEH = (ConvertHexToBCD(alarmTime->tm_hour) << 8)  | ConvertHexToBCD(alarmTime->tm_min); // /HOURS/MINUTES
+        ALMTIMEL = (ConvertHexToBCD(alarmTime->tm_sec) << 8) ;   // SECOND
+    }
+
+    RTCCON1Hbits.AMASK = mask;      // Repetition
+    RTCCON1Hbits.ALMRPT = counter;  // Repeat 24 times
+    RTCCON1Hbits.ALRMEN = 1;        // Enable alarm
 }
 
 bool RTCC_BCDTimeGet(bcdTime_t *currentTime)
