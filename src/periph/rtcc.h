@@ -72,6 +72,7 @@ typedef struct tm bcdTime_t;
 enum RTCC_REPEAT {
     EVERY_HALF_SEC,
     EVERY_SECOND,
+    EVERY_10_SEC,
     EVERY_MINUTE,
     EVERY_10_MIN,
     EVERY_HOUR,
