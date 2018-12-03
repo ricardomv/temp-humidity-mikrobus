@@ -92,6 +92,7 @@ struct tm current_time;
 void timer2_callback(void)
 {
     char date_str[10];
+    char write_size[7] = {0};
     gpio_toggle(LED_D3_PIN);
     LCD_ClearScreen();
     LCD_PutString("T:", 3);
@@ -105,8 +106,8 @@ void timer2_callback(void)
     LCD_PutString(date_str, sizeof(date_str));
     stats = sdcard_cache_get_stats();
     LCD_PutString(" ",1);
-    LCD_PutLongInt(stats.write_success/2);
-    LCD_PutString("kB",2);
+    readable_fs(1024*stats.write_success/2, write_size);
+    LCD_PutString(write_size, sizeof(write_size));
 }
 
 void timer3_callback(void)

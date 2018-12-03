@@ -61,5 +61,7 @@ uint32_t find_fat16_partition(struct sdcard_spi_dev_t *dev);
 
 void print_reset_cause(void);
 
+char* readable_fs(double size/*in bytes*/, char *buf);
+
 #endif	/* UTILS_H */
 
