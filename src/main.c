@@ -82,7 +82,7 @@ struct mcp3201_spi_dev_t humid_adc_dev;
 
 unsigned long int sample_counter = 0;
 int sample_fd;
-int temp_degree_C = 0;
+float temp_degree_C = 0;
 unsigned int true_RH = 0;
 
 struct sdcard_cache_stats_t stats;
@@ -96,9 +96,9 @@ void timer2_callback(void)
     gpio_toggle(LED_D3_PIN);
     LCD_ClearScreen();
     LCD_PutString("T:", 3);
-    LCD_PutInt(temp_degree_C/10);
+    LCD_PutInt(temp_degree_C);
     LCD_PutChar('.');
-    LCD_PutInt(abs(temp_degree_C%10));
+    LCD_PutInt(abs((int)(temp_degree_C*10)%10));
     LCD_PutString("\xDF""C H:", 5);
     LCD_PutInt(true_RH);
     LCD_PutString("%\n\r",3);
@@ -129,7 +129,7 @@ void timer3_callback(void)
 
     strftime(date_str, sizeof(date_str), "%Y/%m/%d-%T", &current_time);
 
-    sprintf(buffer, "%s %.1f %d\n", date_str, (double)temp_degree_C/10, true_RH);
+    sprintf(buffer, "%s %.1f %d\n", date_str, (double)temp_degree_C, true_RH);
 
     len = strlen(buffer);
     ret = fat16_write(sample_fd, buffer, len);
