@@ -33,7 +33,6 @@
 
 #include "utils.h"
 
-#define SAMPLE_CNT            100000
 #define VREF_ADC              3.3  // V
 
 #ifndef FIRMWARE_VERSION
@@ -80,7 +79,7 @@ struct sdcard_spi_dev_t sdcard_dev;
 struct mcp3201_spi_dev_t temp_adc_dev;
 struct mcp3201_spi_dev_t humid_adc_dev;
 
-unsigned long int sample_counter = 0;
+unsigned int sampling = 1;
 int sample_fd;
 float temp_degree_C = 0;
 unsigned int true_RH = 0;
@@ -110,7 +109,7 @@ void timer2_callback(void)
     LCD_PutString(write_size, sizeof(write_size));
 }
 
-void timer3_callback(void)
+void data_aquisition(void)
 {
     int ret;
     char buffer[30];
@@ -138,13 +137,12 @@ void timer3_callback(void)
         DBG_error("failed to write to file\n");
     }
     printf("%s", buffer);
-    if(sample_counter++ > SAMPLE_CNT)
-        timer_stop(TIMER_3);
 }
 
 void rtcc_alarm_callback(void)
 {
     gpio_toggle(LED_D4_PIN);
+    sampling = 0;
 }
 
 void configure_periph()
@@ -169,11 +167,7 @@ void configure_periph()
     /* Configure timer 2 to blink LED */
     timer_power_up(TIMER_2);
     timer_configure(TIMER_2, TIMER2_PRESCALER_256, 15000, 1);
-    
-    /* Configure timer 3 to aquire sample */
-    timer_power_up(TIMER_3);
-    timer_configure(TIMER_3, TIMER3_PRESCALER_64, 500, 1);
-    
+
     /* Configure rtcc */
     RTCC_Initialize();
     
@@ -241,7 +235,7 @@ int main(void) {
         DBG_error( "Reading SD card\n" ) ;
     }
 
-    RTCC_AlarmSet(NULL, EVERY_SECOND, 24);
+    RTCC_AlarmSet(NULL, EVERY_MINUTE, 1);
     IEC3bits.RTCIE = 1;     // Enable alarm interrupt
 
     sample_fd = fat16_open("/SAMPLES.TXT", 'w');
@@ -250,11 +244,9 @@ int main(void) {
     
     /* Start statistics timer*/
     timer_start(TIMER_2);
+
     /* Start data acquisition*/
-    timer_start(TIMER_3);
-    
-    /* Wait until data acquisition is done */
-    while(timer_is_running(TIMER_3));
+    while(sampling) data_aquisition();
     
     fat16_close(sample_fd);
     sdcard_cache_flush();
