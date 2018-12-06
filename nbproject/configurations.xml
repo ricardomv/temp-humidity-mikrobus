@@ -36,6 +36,7 @@
           <itemPath>src/periph/rtcc.h</itemPath>
         </logicalFolder>
         <itemPath>src/utils.h</itemPath>
+        <itemPath>src/explorer1632.h</itemPath>
       </logicalFolder>
     </logicalFolder>
     <logicalFolder name="LinkerScript"

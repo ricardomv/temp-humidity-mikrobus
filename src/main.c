@@ -32,6 +32,7 @@
 #include "fat16/fat16.h"
 
 #include "utils.h"
+#include "explorer1632.h"
 
 #define VREF_ADC              3.3  // V
 
@@ -54,15 +55,6 @@ static const char *welcome_msg = "Proj SEP firmware " FIRMWARE_VERSION
 /* Pins for ADCs */
 #define TEMP_ADC_CS_PIN       GPIO_PIN(PORT_C, 4)  // pin 52 pim / 95 device / RX mikrobus
 #define HUMID_ADC_CS_PIN      GPIO_PIN(PORT_D, 0)  // pin 72 / PWM mikrobus
-
-#define LED_D3_PIN            GPIO_PIN(PORT_A, 0)
-#define LED_D4_PIN            GPIO_PIN(PORT_A, 1)
-#define LED_D5_PIN            GPIO_PIN(PORT_A, 2)
-#define LED_D6_PIN            GPIO_PIN(PORT_A, 3)
-#define LED_D7_PIN            GPIO_PIN(PORT_A, 4)
-#define LED_D8_PIN            GPIO_PIN(PORT_A, 5)
-#define LED_D9_PIN            GPIO_PIN(PORT_A, 6)
-#define LED_D10_PIN           GPIO_PIN(PORT_A, 7)
 
 /* Pins for UART interface */
 #define UART_TX_PIN          (GPIO_PIN(PORT_F, 5))
