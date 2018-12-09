@@ -80,6 +80,7 @@ struct sdcard_cache_stats_t stats;
 
 struct tm current_time;
 
+uint32_t millis;
 uint32_t aquisition_secs = 86400;
 
 void timer2_callback(void)
@@ -122,7 +123,10 @@ void data_aquisition(void)
 
     strftime(date_str, sizeof(date_str), "%Y/%m/%d-%T", &current_time);
 
-    sprintf(buffer, "%s %.1f %d\n", date_str, (double)temp_degree_C, true_RH);
+    sprintf(buffer, "%s.%lu %.1f %d\n", date_str,
+                                        core_timer_get_ticks() - millis,
+                                        (double)temp_degree_C,
+                                        true_RH);
 
     len = strlen(buffer);
     ret = fat16_write(sample_fd, buffer, len);
@@ -137,6 +141,7 @@ void rtcc_alarm_callback(void)
 {
     gpio_toggle(LED_D4_PIN);
     if(--aquisition_secs == 0) sampling = 0;
+    millis = core_timer_get_ticks();
 }
 
 void configure_periph()
@@ -149,7 +154,7 @@ void configure_periph()
 
     /* Configure timer 1 to enable mcu_delay, 1 tick = 1ms */
     timer1_power_up();
-    timer1_configure(TIMER1_PRESCALER_1, 4000, 1);
+    timer1_configure(TIMER1_PRESCALER_1, 14565, 1);
     timer1_start();
     
     /* UART1 */
