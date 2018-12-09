@@ -145,7 +145,7 @@ uint32_t uart_read_noblock(unsigned int uart_num, void *buffer, uint32_t length)
 
     while (byte_read_count < length) {
         if (UxSTA(uart_num) & _U1STA_URXDA_MASK)
-            data[byte_read_count] = UxRXREG(uart_num);
+            data[byte_read_count++] = UxRXREG(uart_num);
         else
             break;
     }
