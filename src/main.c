@@ -153,8 +153,8 @@ void configure_periph()
     /* UART1 */
     gpio_init_out(UART_TX_PIN, 1);
     gpio_init_in(UART_RX_PIN);
-    RPOR8bits.RP17R = 3; //RP17  tx
-    //RPINR18bits.U1RXR = 10;  not sure this is correct
+    RPOR8bits.RP17R = 3;    // RP17 tx
+    RPINR18bits.U1RXR = 10; // RP10 rx
     
     /* Configure timer 2 to blink LED */
     timer_power_up(TIMER_2);
@@ -193,6 +193,37 @@ void configure_periph()
     uart_enable(UART_1);
 }
 
+#define DATE_CMD "SET_DATE"
+#define DATE_CMD_LEN 8
+
+void sync_time(void)
+{
+    struct tm *time_info;
+    char cmd[9] = {0};
+    int count;
+    time_t rawtime;
+
+    do {
+        count = uart_read_noblock(UART_1, cmd, DATE_CMD_LEN);
+    }
+    while(count == 0 && gpio_read(BUTTON_S3_PIN));
+
+    if (!count || cmd[0] == '\r')
+        return;
+
+    if (DATE_CMD_LEN - count > 0)
+        uart_read(UART_1, cmd+count, DATE_CMD_LEN - count);
+
+    if (strncmp(cmd, DATE_CMD, DATE_CMD_LEN))
+        DBG_error( "Setting rtcc time\n" );
+
+    uart_read(UART_1, &rawtime, sizeof(rawtime));
+    time_info = localtime(&rawtime);
+    RTCC_TimeSet(time_info);
+
+    printf ("Current local time and date: %s", asctime(time_info));
+}
+
 int main(void) {
     uint32_t partition_offset;
     
@@ -202,6 +233,8 @@ int main(void) {
     printf(welcome_msg);
     
     print_reset_cause();
+
+    sync_time();
 
     temp_adc_dev.spi_num = SPI_2;
     temp_adc_dev.cs_pin = TEMP_ADC_CS_PIN;
@@ -237,6 +270,8 @@ int main(void) {
     
     /* Start statistics timer*/
     timer_start(TIMER_2);
+    
+    while(!gpio_read(BUTTON_S3_PIN)); // wait for button release
 
     /* Start data acquisition*/
     while(sampling && gpio_read(BUTTON_S3_PIN)) data_aquisition();
