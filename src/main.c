@@ -179,6 +179,7 @@ void configure_periph()
     
     gpio_init_out(LED_D3_PIN, 0);
     gpio_init_out(LED_D4_PIN, 0);
+    gpio_init_in(BUTTON_S3_PIN);
 
     /* Configure spi */
     spi_power_up(SPI_2);
@@ -238,7 +239,7 @@ int main(void) {
     timer_start(TIMER_2);
 
     /* Start data acquisition*/
-    while(sampling) data_aquisition();
+    while(sampling && gpio_read(BUTTON_S3_PIN)) data_aquisition();
     
     fat16_close(sample_fd);
     sdcard_cache_flush();
