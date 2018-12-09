@@ -158,7 +158,7 @@ void RTCC_TimeSet(struct tm *initialTime)
 
 }
 
-void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int counter)
+void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int counter, unsigned int chime)
 {
     RTCCON1Hbits.ALRMEN = 0;     // Disable alarm to avoid a false alarm event
 
@@ -175,7 +175,8 @@ void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int cou
     }
 
     RTCCON1Hbits.AMASK = mask;      // Repetition
-    RTCCON1Hbits.ALMRPT = counter;  // Repeat 24 times
+    RTCCON1Hbits.ALMRPT = counter;  // Repeat # times
+    RTCCON1Hbits.CHIME = chime;         // Roll over ALMRPT
     RTCCON1Hbits.ALRMEN = 1;        // Enable alarm
 }
 

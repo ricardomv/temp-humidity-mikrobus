@@ -188,7 +188,7 @@ void RTCC_TimeSet(struct tm *initialTime);
   @Example
     RTCC_AlarmSet(time, EVERY_HOUR, 24);
 */
-void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int counter);
+void RTCC_AlarmSet(struct tm *alarmTime, enum RTCC_REPEAT mask, unsigned int counter, unsigned int chime);
 
 /**
   @Summary

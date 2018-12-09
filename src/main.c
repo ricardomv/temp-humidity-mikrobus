@@ -80,6 +80,8 @@ struct sdcard_cache_stats_t stats;
 
 struct tm current_time;
 
+uint32_t aquisition_secs = 86400;
+
 void timer2_callback(void)
 {
     char date_str[10];
@@ -134,7 +136,7 @@ void data_aquisition(void)
 void rtcc_alarm_callback(void)
 {
     gpio_toggle(LED_D4_PIN);
-    sampling = 0;
+    if(--aquisition_secs == 0) sampling = 0;
 }
 
 void configure_periph()
@@ -226,6 +228,7 @@ void sync_time(void)
 
 int main(void) {
     uint32_t partition_offset;
+    struct tm current_time;
     
     configure_periph();
 
@@ -261,9 +264,6 @@ int main(void) {
         DBG_error( "Reading SD card\n" ) ;
     }
 
-    RTCC_AlarmSet(NULL, EVERY_MINUTE, 1);
-    IEC3bits.RTCIE = 1;     // Enable alarm interrupt
-
     sample_fd = fat16_open("/SAMPLES.TXT", 'w');
     if (sample_fd < 0)
         DBG_error("Failed to open file \"%s\" for write\n", "/SAMPLES.TXT");
@@ -272,6 +272,10 @@ int main(void) {
     timer_start(TIMER_2);
     
     while(!gpio_read(BUTTON_S3_PIN)); // wait for button release
+    
+    RTCC_TimeGet(&current_time);
+    RTCC_AlarmSet(&current_time, EVERY_SECOND, 0, true);
+    IEC3bits.RTCIE = 1;     // Enable alarm interrupt
 
     /* Start data acquisition*/
     while(sampling && gpio_read(BUTTON_S3_PIN)) data_aquisition();
@@ -289,6 +293,8 @@ int main(void) {
 
     printf("Entering mcu sleep mode.\n");
     LCD_PutString("\n\rDONE            ", 17);
+
+    IEC3bits.RTCIE = 0;     // Enable alarm interrupt
 
     mcu_sleep();
 
