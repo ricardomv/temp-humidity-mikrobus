@@ -993,8 +993,6 @@ F 3 "" H 4300 3250 50  0001 C CNN
 $EndComp
 Wire Wire Line
 	4050 3050 3850 3050
-Text GLabel 3850 2650 2    50   Input ~ 0
-Vref
 Text GLabel 4300 2850 2    50   Input ~ 0
 V_in_humid
 $Comp
@@ -1111,6 +1109,17 @@ F 1 "+3.3V" H 6450 2575 30  0000 C CNN
 F 2 "" H 6450 2450 60  0000 C CNN
 F 3 "" H 6450 2450 60  0000 C CNN
 	1    6450 2450
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:+3.3V #PWR?
+U 1 1 5C113404
+P 3850 2650
+F 0 "#PWR?" H 3850 2610 30  0001 C CNN
+F 1 "+3.3V" H 3850 2775 30  0000 C CNN
+F 2 "" H 3850 2650 60  0000 C CNN
+F 3 "" H 3850 2650 60  0000 C CNN
+	1    3850 2650
 	1    0    0    -1  
 $EndComp
 $EndSCHEMATC
