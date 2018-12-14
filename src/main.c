@@ -72,7 +72,7 @@ struct mcp3201_spi_dev_t temp_adc_dev;
 struct mcp3201_spi_dev_t humid_adc_dev;
 
 unsigned int sampling = 1;
-int sample_fd;
+int sample_fd = 255;
 float temp_degree_C = 0;
 unsigned int true_RH = 0;
 
@@ -121,20 +121,23 @@ void data_aquisition(void)
 
     true_RH = hih5030_get_true_rh(sensor_RH, temp_degree_C);
 
-    strftime(date_str, sizeof(date_str), "%Y/%m/%d-%T", &current_time);
+    strftime(date_str, sizeof(date_str), "%T", &current_time);
 
     sprintf(buffer, "%s.%lu %.1f %d\n", date_str,
                                         core_timer_get_ticks() - millis,
                                         (double)temp_degree_C,
                                         true_RH);
 
-    len = strlen(buffer);
-    ret = fat16_write(sample_fd, buffer, len);
-    if (ret < 0 || (unsigned int)ret != len) {
-        fat16_close(sample_fd);
-        DBG_error("failed to write to file\n");
+    if (sample_fd != 255) {
+        len = strlen(buffer);
+        ret = fat16_write(sample_fd, buffer, len);
+        if (ret < 0 || (unsigned int)ret != len) {
+            fat16_close(sample_fd);
+            DBG_error("failed to write to file\n");
+        }
     }
-    printf("%s", buffer);
+    else
+        printf("%s", buffer);
 }
 
 void rtcc_alarm_callback(void)
@@ -241,6 +244,9 @@ int main(void) {
     printf(welcome_msg);
     
     print_reset_cause();
+    
+    LCD_ClearScreen();
+    LCD_PutString("Press S3 to \n\rstart/stop", 24);
 
     sync_time();
 
@@ -255,9 +261,8 @@ int main(void) {
     sdcard_dev.spi_num = SPI_2;
     sdcard_dev.cs_pin = SD_CS_PIN;
 
-    if (sdcard_init(&sdcard_dev))
-        DBG_error("Failed SD card initialization\n");
-
+    if (!sdcard_init(&sdcard_dev))
+        DBG("Failed SD card initialization\n");
     sdcard_cache_init(sdcard_dev);
 
     partition_offset = find_fat16_partition(&sdcard_dev);
@@ -265,13 +270,13 @@ int main(void) {
         /* Convert partition_offset from block to byte */
         partition_offset *= SDCARD_BLOCK_LENGTH;
         fat16_init(dev, partition_offset);
-    } else {
-        DBG_error( "Reading SD card\n" ) ;
-    }
 
-    sample_fd = fat16_open("/SAMPLES.TXT", 'w');
-    if (sample_fd < 0)
-        DBG_error("Failed to open file \"%s\" for write\n", "/SAMPLES.TXT");
+        sample_fd = fat16_open("/SAMPLES.TXT", 'w');
+        if (sample_fd < 0)
+            DBG_error("Failed to open file \"%s\" for write\n", "/SAMPLES.TXT");
+    }
+    else
+        DBG( "Reading SD card\n" ) ;
     
     /* Start statistics timer*/
     timer_start(TIMER_2);
