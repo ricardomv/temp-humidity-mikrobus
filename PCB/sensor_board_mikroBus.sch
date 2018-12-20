@@ -1,15 +1,16 @@
 EESchema Schematic File Version 4
+LIBS:sensor_board_mikroBus-cache
 EELAYER 26 0
 EELAYER END
 $Descr USLetter 11000 8500
 encoding utf-8
 Sheet 1 1
-Title ""
-Date "2015-10-01"
-Rev "1.0"
-Comp ""
-Comment1 ""
-Comment2 ""
+Title "Programmable Electronic Systems - Final Project"
+Date "2018-12-18"
+Rev "1.2"
+Comp "Instituto Superior Técnico - Master Degree in Electronics Engineering"
+Comment1 "68836 - Pedro Martins Almeida Ribeiro de Oliveira"
+Comment2 "68269 - Ricardo Marcelino Vieira"
 Comment3 ""
 Comment4 ""
 $EndDescr
