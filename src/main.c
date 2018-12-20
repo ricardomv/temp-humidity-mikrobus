@@ -111,7 +111,7 @@ void data_aquisition(void)
     char date_str[20];
     unsigned int len = 0;
     float sensor_RH;
-    
+
     RTCC_TimeGet(&current_time);
 
     temp_degree_C = ad592_get_temp_degree_c(
@@ -232,11 +232,14 @@ void sync_time(void)
     RTCC_TimeSet(time_info);
 
     printf ("Current local time and date: %s", asctime(time_info));
+    strftime(cmd, sizeof(cmd), " %H:%M", time_info);
+    LCD_PutString(cmd, 6);
 }
 
 int main(void) {
     uint32_t partition_offset;
-    struct tm current_time;
+    struct tm current_time = {0};
+    char filename[14] = "/SAMPLES.TXT\0";
     
     configure_periph();
 
@@ -260,6 +263,13 @@ int main(void) {
 
     sdcard_dev.spi_num = SPI_2;
     sdcard_dev.cs_pin = SD_CS_PIN;
+    
+    while(gpio_read(BUTTON_S3_PIN));
+    while(!gpio_read(BUTTON_S3_PIN)); // wait for button release
+    
+    RTCC_TimeGet(&current_time);
+    if (current_time.tm_year != 100)
+        strftime(filename, sizeof(filename), "/%Y%m%d.TXT", &current_time);
 
     if (!sdcard_init(&sdcard_dev))
         DBG("Failed SD card initialization\n");
@@ -271,9 +281,9 @@ int main(void) {
         partition_offset *= SDCARD_BLOCK_LENGTH;
         fat16_init(dev, partition_offset);
 
-        sample_fd = fat16_open("/SAMPLES.TXT", 'w');
+        sample_fd = fat16_open(filename, 'w');
         if (sample_fd < 0)
-            DBG_error("Failed to open file \"%s\" for write\n", "/SAMPLES.TXT");
+            DBG_error("Failed to open file \"%s\" for write\n", filename);
     }
     else
         DBG( "Reading SD card\n" ) ;
@@ -281,9 +291,6 @@ int main(void) {
     /* Start statistics timer*/
     timer_start(TIMER_2);
     
-    while(!gpio_read(BUTTON_S3_PIN)); // wait for button release
-    
-    RTCC_TimeGet(&current_time);
     RTCC_AlarmSet(&current_time, EVERY_SECOND, 0, true);
     IEC3bits.RTCIE = 1;     // Enable alarm interrupt
 
@@ -302,7 +309,7 @@ int main(void) {
     printf("Read error: %lu\n", stats.read_error);
 
     printf("Entering mcu sleep mode.\n");
-    LCD_PutString("\n\rDONE            ", 17);
+    LCD_PutString("\n\rDONE            ", 18);
 
     IEC3bits.RTCIE = 0;     // Enable alarm interrupt
 
