@@ -20,7 +20,7 @@ unsigned int mcp3201_get_sample(struct mcp3201_spi_dev_t *dev)
     uint8_t rx_buffer[3] = {0};
     unsigned int result = 0;
 
-    spi_set_baud(dev->spi_num, 400000);  // datasheet says it can do 800 kHz at 2.7V
+    spi_set_baud(dev->spi_num, 800000);  // datasheet says it can do 800 kHz at 2.7V
 
     gpio_write(dev->cs_pin, 0);
     spi_transfer(dev->spi_num, NULL, rx_buffer, 2);
